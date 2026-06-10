@@ -6,6 +6,7 @@
 
 - [2026-06-10 物理AI · A股产业链深度研究](reports/physical-ai-a-share-2026-06-10.md)
 - [2026-06-10 供应链挑战报告：恒立液压 / 绿的谐波 / 三花智控](reports/supplier-challenge/supplier-challenge-henglv-green-sanhua-2026-06-10.md)
+- [2026-06-10 三公司对比评分：恒立液压 vs 绿的谐波 vs 三花智控](reports/supplier-challenge/three-company-comparison-2026-06-10.md)
 
 ---
 
