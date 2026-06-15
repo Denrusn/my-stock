@@ -11,10 +11,10 @@
     --bg-secondary: #12122a;
     --card-bg: linear-gradient(135deg, rgba(255,255,255,0.03), rgba(255,255,255,0.06));
     --card-border: rgba(255,255,255,0.06);
-    --green: #00c853;
-    --green-light: #69f0ae;
-    --red: #ff5252;
-    --red-light: #ff8a80;
+    --green: #ff5252;     /* Chinese convention: green = 跌 (was #00c853) */
+    --green-light: #ff8a80;
+    --red: #00c853;       /* Chinese convention: red = 涨 (was #ff5252) */
+    --red-light: #69f0ae;
     --purple: #5c6bc0;
     --purple-light: #7986cb;
     --yellow: #ffd740;
@@ -513,7 +513,7 @@ function renderSentiment(data) {
         labels: ['涨停', '跌停', '其他'],
         datasets: [{
           data: [zt, dt, other],
-          backgroundColor: ['#00c853', '#ff5252', 'rgba(255,255,255,0.05)'],
+          backgroundColor: ['#ff5252', '#00c853', 'rgba(255,255,255,0.05)'],
           borderWidth: 0
         }]
       },
@@ -538,8 +538,8 @@ function renderWatchlist(data) {
       + '<div style="font-size:13px;font-weight:600;margin-bottom:6px;">' + s.name + '</div>'
       + '<div style="font-size:16px;font-weight:700;font-variant-numeric:tabular-nums;margin-bottom:2px;">' + fmt(s.price) + '</div>'
       + '<div class="' + chgCls + '" style="font-size:13px;font-weight:600;margin-bottom:6px;">' + pct(s.changePercent) + '</div>';
-    if (s.kline && s.kline.length > 1) {
-      var clos = s.kline;
+    if (s.bars && s.bars.length > 1) {
+      var clos = s.bars.map(function(b) { return b.close || 0; });
       var first = clos[0];
       var last = clos[clos.length - 1];
       var lineColor = last >= first ? 'var(--green)' : 'var(--red)';

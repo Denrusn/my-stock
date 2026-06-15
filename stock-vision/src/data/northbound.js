@@ -32,10 +32,10 @@ export async function fetch() {
 
   const dailyHistory = marketFlow.slice(-20).map(d => ({
     date: d.date,
-    netInflow: d.mainNetInflow || 0,
+    net: d.mainNetInflow || 0,
     shClose: d.shClose,
     shChangePercent: d.shChangePercent
   }));
 
-  return { todayNet, weekNet, monthNet, dailyHistory, updatedAt: Date.now() };
+  return { todayNet, weekNet, monthNet, history: dailyHistory, updatedAt: Date.now() };
 }

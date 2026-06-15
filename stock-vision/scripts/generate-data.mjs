@@ -48,7 +48,7 @@ async function generateQuotes() {
 
 async function generateIndustries() {
   try {
-    const list = await sdk.board.industry.list();
+    const list = await sdk.getIndustryList();
     const ranked = list
       .map(item => ({
         name: item.name, code: item.code,
@@ -86,11 +86,11 @@ async function generateNorthbound() {
     const monthNet = recentFlows.reduce((sum, d) => sum + (d.mainNetInflow || 0), 0);
 
     const dailyHistory = marketFlow.slice(-20).map(d => ({
-      date: d.date, netInflow: d.mainNetInflow || 0,
+      date: d.date, net: d.mainNetInflow || 0,
       shClose: d.shClose, shChangePercent: d.shChangePercent
     }));
 
-    return { todayNet, weekNet, monthNet, dailyHistory, updatedAt: Date.now() };
+    return { todayNet, weekNet, monthNet, history: dailyHistory, updatedAt: Date.now() };
   } catch (err) {
     console.warn('  [warn] northbound failed:', err.message);
     return { todayNet: 0, weekNet: 0, monthNet: 0, dailyHistory: [], updatedAt: Date.now(), error: err.message };
@@ -128,10 +128,21 @@ async function generateKline(period = 'weekly') {
         .catch(() => ({ code, bars: [] }));
     })
   );
-  return {
-    stocks: results.map(r => r.value || r),
-    updatedAt: Date.now()
-  };
+
+  // Enrich with stock name/price/change from quotes
+  let stockInfo = {};
+  try {
+    const q = await sdk.quotes.cnSimple(WATCHLIST);
+    if (q) q.forEach(item => { stockInfo[item.code] = item; });
+  } catch (e) { /* use empty map */ }
+
+  const stocks = results.map(r => r.value || r).map(s => {
+    const codeKey = s.code.replace(/^[a-z]+/, '');
+    const info = stockInfo[codeKey] || {};
+    return { ...s, name: info.name || codeKey, price: info.price, changePercent: info.changePercent };
+  });
+
+  return { stocks, updatedAt: Date.now() };
 }
 
 async function main() {
