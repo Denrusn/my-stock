@@ -93,7 +93,7 @@ async function generateNorthbound() {
     return { todayNet, weekNet, monthNet, history: dailyHistory, updatedAt: Date.now() };
   } catch (err) {
     console.warn('  [warn] northbound failed:', err.message);
-    return { todayNet: 0, weekNet: 0, monthNet: 0, dailyHistory: [], updatedAt: Date.now(), error: err.message };
+    return { todayNet: 0, weekNet: 0, monthNet: 0, history: [], updatedAt: Date.now(), error: err.message };
   }
 }
 
@@ -116,16 +116,57 @@ async function generateSentiment() {
 }
 
 async function generateKline(period = 'weekly') {
+  // Map period to Tencent API format
+  const PERIOD_MAP = { daily: 'day', weekly: 'week', monthly: 'month' };
+  const periodKey = PERIOD_MAP[period] || 'week';
+
+  async function fetchFromSDK(code) {
+    const numCode = code.replace(/^[a-z]+/, '');
+    try {
+      const k = await sdk.kline.withIndicators(numCode, { period, limit: 50 });
+      const rawBars = k.bars || k;
+      if (Array.isArray(rawBars) && rawBars.length > 0) {
+        return { code, bars: rawBars.slice(-12) };
+      }
+    } catch (e) { /* fall through to Tencent */ }
+    return null;
+  }
+
+  async function fetchFromTencent(code) {
+    try {
+      const url = `http://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=${code},${periodKey},,,20,qfq`;
+      const res = await fetch(url);
+      const data = await res.json();
+      const stocks = data?.data?.[code];
+      if (!stocks) return null;
+      // Response key: qfqday, qfqweek, or qfqmonth
+      const key = 'qfq' + periodKey;
+      const rawBars = stocks[key];
+      if (!Array.isArray(rawBars) || rawBars.length === 0) return null;
+      const bars = rawBars.slice(-12).map(b => ({
+        date: b[0],
+        open: parseFloat(b[1]),
+        close: parseFloat(b[2]),
+        high: parseFloat(b[3]),
+        low: parseFloat(b[4]),
+        volume: parseFloat(b[5])
+      }));
+      return { code, bars };
+    } catch (e) { return null; }
+  }
+
   const results = await Promise.allSettled(
-    WATCHLIST.map(code => {
+    WATCHLIST.map(async (code) => {
+      // Try SDK first, then Tencent fallback
+      let result = await fetchFromSDK(code);
+      if (!result) {
+        console.log(`    [info] kline fallback to Tencent for ${code}`);
+        result = await fetchFromTencent(code);
+      }
+      if (!result) return { code, bars: [] };
+      // Fix code to match frontend: strip prefix
       const numCode = code.replace(/^[a-z]+/, '');
-      return sdk.kline.withIndicators(numCode, { period, limit: 50 })
-        .then(k => {
-          const rawBars = k.bars || k;
-          const bars = Array.isArray(rawBars) ? rawBars.slice(-12) : [];
-          return { code, bars };
-        })
-        .catch(() => ({ code, bars: [] }));
+      return { ...result, code: code }; // keep original code format
     })
   );
 
