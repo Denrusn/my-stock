@@ -4,14 +4,9 @@
 name: Deploy Stock Vision
 
 on:
-  # Manual trigger
   workflow_dispatch:
-
-  # Automatic: every 30 minutes during trading hours (Mon-Fri, 9:00-16:00 CST)
   schedule:
     - cron: '*/30 1-8 * * 1-5'
-
-  # Also run on push to main
   push:
     branches: [main]
     paths:
@@ -26,10 +21,6 @@ permissions:
 concurrency:
   group: pages
   cancel-in-progress: false
-
-defaults:
-  run:
-    working-directory: stock-vision
 
 jobs:
   build:
@@ -46,13 +37,12 @@ jobs:
           cache-dependency-path: stock-vision/package-lock.json
 
       - name: Install dependencies
+        working-directory: stock-vision
         run: npm ci
 
       - name: Generate static data
+        working-directory: stock-vision
         run: node scripts/generate-data.mjs
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
@@ -65,7 +55,6 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     needs: build
-
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
