@@ -328,7 +328,9 @@
 // ===== CONFIG =====
 // Auto-detect: live API (/api) vs static files (GitHub Pages ./data/)
 const isStatic = !location.host || location.hostname === '' || location.hostname.endsWith('.github.io');
-const API_BASE = isStatic ? './data' : '/api';
+// Use absolute path from page base for static mode (handles subpath like /my-stock/)
+const BASE_PATH = location.pathname.replace(/\/?$/, '/');
+const API_BASE = isStatic ? BASE_PATH + 'data' : '/api';
 const isLiveAPI = !isStatic;
 const INDICES = [
   { code: '000001', name: '上证指数' },
@@ -372,10 +374,10 @@ async function fetchJSON(url) {
   return res.json();
 }
 
-// Build static data file URL (strip query params for file:// compatibility)
-function dataURL(path) {
-  // Remove query string for static file mode (GitHub Pages)
-  const cleanPath = path.split('?')[0];
+// Build API URL: live mode uses /api/<path>, static uses <base>/data/<path>.json
+function apiURL(path) {
+  if (isLiveAPI) return API_BASE + '/' + path;
+  const cleanPath = path.split('?')[0]; // strip query params for static file mode
   return API_BASE + '/' + cleanPath + '.json';
 }
 
@@ -576,11 +578,11 @@ function showError(section) {
 // ===== REFRESH ALL =====
 async function refreshAll() {
   const results = await Promise.allSettled([
-    fetchJSON(API_BASE + '/quotes').then(d => { state.quotes = d; renderIndexCards(d); }).catch(() => showError('quotes')),
-    fetchJSON(API_BASE + '/industries').then(d => { state.industries = d; renderIndustries(d); }).catch(() => showError('industries')),
-    fetchJSON(API_BASE + '/northbound').then(d => { state.northbound = d; renderNorthbound(d); }).catch(() => showError('northbound')),
-    fetchJSON(API_BASE + '/sentiment').then(d => { state.sentiment = d; renderSentiment(d); }).catch(() => showError('sentiment')),
-    fetchJSON(isLiveAPI ? API_BASE + '/kline?period=weekly' : dataURL('kline')).then(d => { state.kline = d; renderWatchlist(d); }).catch(() => showError('kline')),
+    fetchJSON(apiURL('quotes')).then(d => { state.quotes = d; renderIndexCards(d); }).catch(() => showError('quotes')),
+    fetchJSON(apiURL('industries')).then(d => { state.industries = d; renderIndustries(d); }).catch(() => showError('industries')),
+    fetchJSON(apiURL('northbound')).then(d => { state.northbound = d; renderNorthbound(d); }).catch(() => showError('northbound')),
+    fetchJSON(apiURL('sentiment')).then(d => { state.sentiment = d; renderSentiment(d); }).catch(() => showError('sentiment')),
+    fetchJSON(apiURL('kline?period=weekly')).then(d => { state.kline = d; renderWatchlist(d); }).catch(() => showError('kline')),
   ]);
   // Hide loading screen
   const loading = document.getElementById('loadingScreen');
@@ -604,8 +606,7 @@ document.addEventListener('click', e => {
 
 async function fetchAndRenderKline(period) {
   try {
-    const url = isLiveAPI ? API_BASE + '/kline?period=' + period : dataURL('kline');
-    const data = await fetchJSON(url);
+    const data = await fetchJSON(apiURL('kline?period=' + period));
     renderWatchlist(data);
   } catch(e) { console.error('kline tab error:', e); }
 }
