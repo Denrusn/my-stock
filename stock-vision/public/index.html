@@ -483,6 +483,46 @@ function renderSentiment(data) {
   }, 50);
 }
 
+// ===== RENDER: WATCHLIST =====
+function renderWatchlist(data) {
+  var body = document.getElementById('watchlistBody');
+  if (!data || !data.stocks || !data.stocks.length) {
+    body.innerHTML = '<div style="color:var(--text-secondary);text-align:center;padding:20px;">暂无数据</div>';
+    return;
+  }
+  var stocks = data.stocks.slice(0, 5);
+  var html = '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;">';
+  for (var i = 0; i < stocks.length; i++) {
+    var s = stocks[i];
+    var chgCls = s.changePercent >= 0 ? 'up' : 'down';
+    html += '<div style="padding:12px;text-align:center;">'
+      + '<div style="font-size:13px;font-weight:600;margin-bottom:6px;">' + s.name + '</div>'
+      + '<div style="font-size:16px;font-weight:700;font-variant-numeric:tabular-nums;margin-bottom:2px;">' + fmt(s.price) + '</div>'
+      + '<div class="' + chgCls + '" style="font-size:13px;font-weight:600;margin-bottom:6px;">' + pct(s.changePercent) + '</div>';
+    if (s.kline && s.kline.length > 1) {
+      var clos = s.kline;
+      var first = clos[0];
+      var last = clos[clos.length - 1];
+      var lineColor = last >= first ? 'var(--green)' : 'var(--red)';
+      var maxV = Math.max.apply(null, clos);
+      var minV = Math.min.apply(null, clos);
+      var range = maxV - minV || 1;
+      var w = 120;
+      var h = 40;
+      var points = [];
+      for (var k = 0; k < clos.length; k++) {
+        var x = (k / (clos.length - 1) * w).toFixed(1);
+        var y = ((maxV - clos[k]) / range * h).toFixed(1);
+        points.push(x + ',' + y);
+      }
+      html += '<svg width="120" height="40" viewBox="0 0 120 40" style="display:block;margin:0 auto;"><polyline fill="none" stroke="' + lineColor + '" stroke-width="1.5" points="' + points.join(' ') + '"/></svg>';
+    }
+    html += '</div>';
+  }
+  html += '</div>';
+  body.innerHTML = html;
+}
+
 // ===== REFRESH ALL =====
 async function refreshAll() {
   try {
@@ -510,6 +550,13 @@ async function refreshAll() {
       state.sentiment = sentData;
       renderSentiment(sentData);
     } catch (e) { console.error('sentiment error:', e); }
+
+    // Watchlist K-line
+    try {
+      const klineData = await fetchJSON(API_BASE + '/kline?period=weekly');
+      state.kline = klineData;
+      renderWatchlist(klineData);
+    } catch (e) { console.error('kline error:', e); }
 
     // Hide loading screen on first successful fetch
     const loading = document.getElementById('loadingScreen');
