@@ -246,6 +246,7 @@
 
   <!-- INDEX GRID -->
   <div class="index-grid" id="indexGrid" style="display:none;">
+    <div id="quotesBody" style="display:contents;"></div>
     <div class="index-card" data-code="000001">
       <div class="index-name">上证指数</div>
       <div class="index-price" id="price-000001">--</div>
@@ -313,7 +314,7 @@
     <div class="card">
       <div class="card-header">
         <h3>📋 自选股</h3>
-        <div class="tab-group">
+        <div class="tab-group" id="klineTab">
           <button class="tab active" data-period="weekly">周K</button>
           <button class="tab" data-period="daily">日K</button>
           <button class="tab" data-period="monthly">月K</button>
@@ -548,53 +549,54 @@ function renderWatchlist(data) {
   body.innerHTML = html;
 }
 
+// ===== ERROR HANDLING =====
+let errorCount = 0;
+
+function showError(section) {
+  errorCount++;
+  const body = document.getElementById(section + 'Body');
+  if (body) {
+    body.innerHTML = '<div style="color:var(--red);text-align:center;padding:12px;font-size:13px;">⚠️ 数据获取失败</div>';
+  }
+  if (errorCount > 3) {
+    alert('数据加载异常，请检查网络连接或刷新页面重试');
+  }
+}
+
 // ===== REFRESH ALL =====
 async function refreshAll() {
-  try {
-    const data = await fetchJSON(API_BASE + '/quotes');
-    state.quotes = data;
-    renderIndexCards(data);
-
-    // Industries
-    try {
-      const indData = await fetchJSON(API_BASE + '/industries');
-      state.industries = indData;
-      renderIndustries(indData);
-    } catch (e) { console.error('industries error:', e); }
-
-    // Northbound
-    try {
-      const nbData = await fetchJSON(API_BASE + '/northbound');
-      state.northbound = nbData;
-      renderNorthbound(nbData);
-    } catch (e) { console.error('northbound error:', e); }
-
-    // Sentiment
-    try {
-      const sentData = await fetchJSON(API_BASE + '/sentiment');
-      state.sentiment = sentData;
-      renderSentiment(sentData);
-    } catch (e) { console.error('sentiment error:', e); }
-
-    // Watchlist K-line
-    try {
-      const klineData = await fetchJSON(API_BASE + '/kline?period=weekly');
-      state.kline = klineData;
-      renderWatchlist(klineData);
-    } catch (e) { console.error('kline error:', e); }
-
-    // Hide loading screen on first successful fetch
-    const loading = document.getElementById('loadingScreen');
-    if (loading && loading.style.display !== 'none') {
-      loading.style.display = 'none';
-      document.getElementById('topBar').style.display = '';
-      document.getElementById('indexGrid').style.display = '';
-      document.getElementById('middleGrid').style.display = '';
-      document.getElementById('watchlistSection').style.display = '';
-    }
-  } catch (err) {
-    console.error('refreshAll error:', err);
+  const results = await Promise.allSettled([
+    fetchJSON(API_BASE + '/quotes').then(d => { state.quotes = d; renderIndexCards(d); }).catch(() => showError('quotes')),
+    fetchJSON(API_BASE + '/industries').then(d => { state.industries = d; renderIndustries(d); }).catch(() => showError('industries')),
+    fetchJSON(API_BASE + '/northbound').then(d => { state.northbound = d; renderNorthbound(d); }).catch(() => showError('northbound')),
+    fetchJSON(API_BASE + '/sentiment').then(d => { state.sentiment = d; renderSentiment(d); }).catch(() => showError('sentiment')),
+    fetchJSON(API_BASE + '/kline?period=weekly').then(d => { state.kline = d; renderWatchlist(d); }).catch(() => showError('kline')),
+  ]);
+  // Hide loading screen
+  const loading = document.getElementById('loadingScreen');
+  if (loading) {
+    loading.remove();
+    document.getElementById('topBar').style.display = '';
+    document.getElementById('indexGrid').style.display = '';
+    document.getElementById('middleGrid').style.display = '';
+    document.getElementById('watchlistSection').style.display = '';
   }
+}
+
+// ===== KLINE TAB SWITCHING =====
+document.addEventListener('click', e => {
+  const tab = e.target.closest('.tab');
+  if (!tab || !tab.closest('#klineTab')) return;
+  $$('#klineTab .tab').forEach(t => t.classList.remove('active'));
+  tab.classList.add('active');
+  fetchAndRenderKline(tab.dataset.period);
+});
+
+async function fetchAndRenderKline(period) {
+  try {
+    const data = await fetchJSON(API_BASE + '/kline?period=' + period);
+    renderWatchlist(data);
+  } catch(e) { console.error('kline tab error:', e); }
 }
 
 // ===== SET LIVE DATE =====
