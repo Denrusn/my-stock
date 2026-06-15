@@ -461,8 +461,26 @@ function renderSentiment(data) {
     + '<div style="flex:1;text-align:center;"><div style="font-size:11px;color:var(--green);margin-bottom:4px;">涨停</div><div style="font-size:20px;font-weight:700;color:var(--green);">' + zt + '</div></div>'
     + '<div style="flex:1;text-align:center;"><div style="font-size:11px;color:var(--red);margin-bottom:4px;">跌停</div><div style="font-size:20px;font-weight:700;color:var(--red);">' + dt + '</div></div>'
     + '<div style="flex:1;text-align:center;"><div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px;">总量</div><div style="font-size:16px;font-weight:600;font-variant-numeric:tabular-nums;">' + Number(vol).toLocaleString('zh-CN') + '</div></div>'
+    + '<div style="width:80px;height:80px;"><canvas id="sentimentDoughnut" width="80" height="80"></canvas></div>'
     + '</div>';
   body.innerHTML = html;
+  setTimeout(function() {
+    var ctx = document.getElementById('sentimentDoughnut');
+    if (!ctx) return;
+    if (window._sentimentChart) window._sentimentChart.destroy();
+    window._sentimentChart = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: ['涨停', '跌停', '其他'],
+        datasets: [{
+          data: [zt, dt, other],
+          backgroundColor: ['#00c853', '#ff5252', 'rgba(255,255,255,0.05)'],
+          borderWidth: 0
+        }]
+      },
+      options: { cutout: '60%', plugins: { legend: { display: false } }, responsive: true, maintainAspectRatio: true }
+    });
+  }, 50);
 }
 
 // ===== REFRESH ALL =====
