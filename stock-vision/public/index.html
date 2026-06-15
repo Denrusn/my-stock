@@ -324,7 +324,97 @@
   </div>
 </div>
 <script>
-// Placeholder for data fetching
+// ===== CONFIG =====
+const API_BASE = '/api';
+const INDICES = [
+  { code: '000001', name: '上证指数' },
+  { code: '399001', name: '深证成指' },
+  { code: '399006', name: '创业板指' },
+  { code: '000688', name: '科创50' }
+];
+
+// ===== STATE =====
+const state = {
+  quotes: null,
+  industries: null,
+  northbound: null,
+  sentiment: null,
+  kline: null
+};
+
+// ===== UTILITIES =====
+const $ = sel => document.querySelector(sel);
+const $$ = sel => document.querySelectorAll(sel);
+
+function fmt(v) {
+  if (v === undefined || v === null || isNaN(v)) return '--';
+  return Number(v).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function pct(v) {
+  if (v === undefined || v === null || isNaN(v)) return '--';
+  const sign = v > 0 ? '+' : '';
+  return sign + Number(v).toFixed(2) + '%';
+}
+
+function cls(v) {
+  if (v === undefined || v === null || isNaN(v)) return '';
+  return v >= 0 ? 'up' : 'down';
+}
+
+async function fetchJSON(url) {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+  return res.json();
+}
+
+// ===== RENDER: INDEX CARDS =====
+function renderIndexCards(data) {
+  if (!data || !data.indices) return;
+  data.indices.forEach(item => {
+    const priceEl = document.getElementById('price-' + item.code);
+    const changeEl = document.getElementById('change-' + item.code);
+    if (priceEl) priceEl.textContent = fmt(item.price);
+    if (changeEl) {
+      changeEl.textContent = pct(item.changePercent);
+      changeEl.className = 'index-change ' + cls(item.changePercent);
+    }
+  });
+}
+
+// ===== REFRESH ALL =====
+async function refreshAll() {
+  try {
+    const data = await fetchJSON(API_BASE + '/quotes');
+    state.quotes = data;
+    renderIndexCards(data);
+
+    // Hide loading screen on first successful fetch
+    const loading = document.getElementById('loadingScreen');
+    if (loading && loading.style.display !== 'none') {
+      loading.style.display = 'none';
+      document.getElementById('topBar').style.display = '';
+      document.getElementById('indexGrid').style.display = '';
+      document.getElementById('middleGrid').style.display = '';
+      document.getElementById('watchlistSection').style.display = '';
+    }
+  } catch (err) {
+    console.error('refreshAll error:', err);
+  }
+}
+
+// ===== SET LIVE DATE =====
+function setLiveDate() {
+  const now = new Date();
+  const opts = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' };
+  document.getElementById('liveDate').textContent = now.toLocaleDateString('zh-CN', opts);
+}
+
+// ===== INIT =====
+refreshAll();
+setInterval(refreshAll, 30000);
+setLiveDate();
+setInterval(setLiveDate, 60000);
 </script>
 </body>
 </html>
