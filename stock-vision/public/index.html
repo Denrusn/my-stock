@@ -30,14 +30,157 @@
     overflow-x: hidden;
   }
   .dashboard { max-width: 1440px; margin: 0 auto; padding: 20px; }
+
+  /* ===== TOP BAR ===== */
+  .top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 0 16px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    margin-bottom: 20px;
+  }
+  .top-bar-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .logo {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, var(--purple), var(--purple-light));
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 700;
+  }
+  .brand-title {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    background: linear-gradient(90deg, var(--purple-light), #9fa8da);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .top-bar-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+  .live-date {
+    font-size: 13px;
+  }
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--green);
+    animation: breathe 2s ease-in-out infinite;
+  }
+  @keyframes breathe {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.7); }
+  }
+
+  /* ===== INDEX GRID ===== */
+  .index-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .index-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 16px;
+    cursor: default;
+    transition: transform 0.2s, box-shadow 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .index-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(92,107,192,0.15);
+  }
+  .index-name {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+  }
+  .index-price {
+    font-size: 22px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.5px;
+    margin-bottom: 4px;
+  }
+  .index-change {
+    font-size: 14px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .index-chart {
+    margin-top: 8px;
+    height: 28px;
+    width: 100%;
+  }
+  .up { color: var(--green); }
+  .down { color: var(--red); }
 </style>
 </head>
 <body>
 <div class="dashboard" id="app">
+  <!-- Loading Screen -->
   <div class="loading-screen" id="loadingScreen">
     <div style="text-align:center;padding:40vh 0;">
       <div style="font-size:32px;font-weight:700;margin-bottom:12px;">📊 STOCK VISION</div>
       <div style="font-size:14px;color:var(--text-secondary);">正在加载数据...</div>
+    </div>
+  </div>
+
+  <!-- TOP BAR -->
+  <div class="top-bar" id="topBar" style="display:none;">
+    <div class="top-bar-left">
+      <div class="logo">📊</div>
+      <div class="brand-title">STOCK VISION</div>
+    </div>
+    <div class="top-bar-right">
+      <span class="live-date" id="liveDate"></span>
+      <span class="status-dot" title="Live"></span>
+    </div>
+  </div>
+
+  <!-- INDEX GRID -->
+  <div class="index-grid" id="indexGrid" style="display:none;">
+    <div class="index-card" data-code="000001">
+      <div class="index-name">上证指数</div>
+      <div class="index-price" id="price-000001">--</div>
+      <div class="index-change" id="change-000001">--</div>
+      <canvas class="index-chart" id="chart-000001"></canvas>
+    </div>
+    <div class="index-card" data-code="399001">
+      <div class="index-name">深证成指</div>
+      <div class="index-price" id="price-399001">--</div>
+      <div class="index-change" id="change-399001">--</div>
+      <canvas class="index-chart" id="chart-399001"></canvas>
+    </div>
+    <div class="index-card" data-code="399006">
+      <div class="index-name">创业板指</div>
+      <div class="index-price" id="price-399006">--</div>
+      <div class="index-change" id="change-399006">--</div>
+      <canvas class="index-chart" id="chart-399006"></canvas>
+    </div>
+    <div class="index-card" data-code="000688">
+      <div class="index-name">科创50</div>
+      <div class="index-price" id="price-000688">--</div>
+      <div class="index-change" id="change-000688">--</div>
+      <canvas class="index-chart" id="chart-000688"></canvas>
     </div>
   </div>
 </div>
