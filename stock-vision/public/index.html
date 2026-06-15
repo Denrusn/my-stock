@@ -326,7 +326,10 @@
 </div>
 <script>
 // ===== CONFIG =====
-const API_BASE = '/api';
+// Auto-detect: live API (/api) vs static files (GitHub Pages ./data/)
+const isStatic = !location.host || location.hostname === '' || location.hostname.endsWith('.github.io');
+const API_BASE = isStatic ? './data' : '/api';
+const isLiveAPI = !isStatic;
 const INDICES = [
   { code: '000001', name: '上证指数' },
   { code: '399001', name: '深证成指' },
@@ -367,6 +370,13 @@ async function fetchJSON(url) {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
   return res.json();
+}
+
+// Build static data file URL (strip query params for file:// compatibility)
+function dataURL(path) {
+  // Remove query string for static file mode (GitHub Pages)
+  const cleanPath = path.split('?')[0];
+  return API_BASE + '/' + cleanPath + '.json';
 }
 
 // ===== ANIMATION: COUNT UP =====
@@ -570,7 +580,7 @@ async function refreshAll() {
     fetchJSON(API_BASE + '/industries').then(d => { state.industries = d; renderIndustries(d); }).catch(() => showError('industries')),
     fetchJSON(API_BASE + '/northbound').then(d => { state.northbound = d; renderNorthbound(d); }).catch(() => showError('northbound')),
     fetchJSON(API_BASE + '/sentiment').then(d => { state.sentiment = d; renderSentiment(d); }).catch(() => showError('sentiment')),
-    fetchJSON(API_BASE + '/kline?period=weekly').then(d => { state.kline = d; renderWatchlist(d); }).catch(() => showError('kline')),
+    fetchJSON(isLiveAPI ? API_BASE + '/kline?period=weekly' : dataURL('kline')).then(d => { state.kline = d; renderWatchlist(d); }).catch(() => showError('kline')),
   ]);
   // Hide loading screen
   const loading = document.getElementById('loadingScreen');
@@ -594,7 +604,8 @@ document.addEventListener('click', e => {
 
 async function fetchAndRenderKline(period) {
   try {
-    const data = await fetchJSON(API_BASE + '/kline?period=' + period);
+    const url = isLiveAPI ? API_BASE + '/kline?period=' + period : dataURL('kline');
+    const data = await fetchJSON(url);
     renderWatchlist(data);
   } catch(e) { console.error('kline tab error:', e); }
 }
