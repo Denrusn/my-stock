@@ -414,8 +414,8 @@ function renderIndexCards(data) {
       animateCountUp(priceEl, item.price);
     }
     if (changeEl) {
-      changeEl.textContent = pct(item.changePercent);
-      changeEl.className = 'index-change ' + cls(item.changePercent);
+      changeEl.textContent = pct(item.changePercent || item.change);
+      changeEl.className = 'index-change ' + cls(item.changePercent || item.change);
     }
   });
 }
@@ -588,6 +588,12 @@ async function refreshAll() {
   const loading = document.getElementById('loadingScreen');
   if (loading) loading.remove();
 }
+
+// Fallback: force hide loading screen after 8s even if some data fails
+setTimeout(function() {
+  var ls = document.getElementById('loadingScreen');
+  if (ls) ls.remove();
+}, 8000);
 
 // ===== KLINE TAB SWITCHING =====
 document.addEventListener('click', e => {

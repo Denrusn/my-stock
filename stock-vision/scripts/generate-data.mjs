@@ -119,8 +119,12 @@ async function generateKline(period = 'weekly') {
   const results = await Promise.allSettled(
     WATCHLIST.map(code => {
       const numCode = code.replace(/^[a-z]+/, '');
-      return sdk.kline.withIndicators(numCode, { period, limit: 12 })
-        .then(k => ({ code, bars: k.bars || k }))
+      return sdk.kline.withIndicators(numCode, { period, limit: 50 })
+        .then(k => {
+          const rawBars = k.bars || k;
+          const bars = Array.isArray(rawBars) ? rawBars.slice(-12) : [];
+          return { code, bars };
+        })
         .catch(() => ({ code, bars: [] }));
     })
   );
