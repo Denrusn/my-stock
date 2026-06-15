@@ -233,7 +233,7 @@
   </div>
 
   <!-- TOP BAR -->
-  <div class="top-bar" id="topBar" style="display:none;">
+  <div class="top-bar" id="topBar">
     <div class="top-bar-left">
       <div class="logo">📊</div>
       <div class="brand-title">STOCK VISION</div>
@@ -245,7 +245,7 @@
   </div>
 
   <!-- INDEX GRID -->
-  <div class="index-grid" id="indexGrid" style="display:none;">
+  <div class="index-grid" id="indexGrid">
     <div id="quotesBody" style="display:contents;"></div>
     <div class="index-card" data-code="000001">
       <div class="index-name">上证指数</div>
@@ -274,7 +274,7 @@
   </div>
 
   <!-- MIDDLE GRID -->
-  <div class="middle-grid" id="middleGrid" style="display:none;">
+  <div class="middle-grid" id="middleGrid">
     <!-- Industries -->
     <div class="card" id="industriesCard">
       <div class="card-header">
@@ -310,7 +310,7 @@
   </div>
 
   <!-- WATCHLIST SECTION -->
-  <div class="watchlist-section" id="watchlistSection" style="display:none;">
+  <div class="watchlist-section" id="watchlistSection">
     <div class="card">
       <div class="card-header">
         <h3>📋 自选股</h3>
@@ -584,15 +584,9 @@ async function refreshAll() {
     fetchJSON(apiURL('sentiment')).then(d => { state.sentiment = d; renderSentiment(d); }).catch(() => showError('sentiment')),
     fetchJSON(apiURL('kline?period=weekly')).then(d => { state.kline = d; renderWatchlist(d); }).catch(() => showError('kline')),
   ]);
-  // Hide loading screen
+  // Hide loading screen (sections are visible by default)
   const loading = document.getElementById('loadingScreen');
-  if (loading) {
-    loading.remove();
-    document.getElementById('topBar').style.display = '';
-    document.getElementById('indexGrid').style.display = '';
-    document.getElementById('middleGrid').style.display = '';
-    document.getElementById('watchlistSection').style.display = '';
-  }
+  if (loading) loading.remove();
 }
 
 // ===== KLINE TAB SWITCHING =====
