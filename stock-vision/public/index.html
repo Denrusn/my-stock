@@ -458,10 +458,11 @@ function renderNorthbound(data) {
   var netDayCls = netDay >= 0 ? 'up' : 'down';
   var netWeekCls = netWeek >= 0 ? 'up' : 'down';
   var netMonthCls = netMonth >= 0 ? 'up' : 'down';
+  function toYi(v) { return (v / 1e8).toFixed(1); }
   var html = '<div style="display:flex;gap:12px;margin-bottom:10px;">'
-    + '<div style="flex:1;text-align:center;"><div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px;">今日</div><div class="' + netDayCls + '" style="font-size:18px;font-weight:700;">' + (netDay > 0 ? '+' : '') + netDay.toFixed(2) + '亿</div></div>'
-    + '<div style="flex:1;text-align:center;"><div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px;">本周</div><div class="' + netWeekCls + '" style="font-size:18px;font-weight:700;">' + (netWeek > 0 ? '+' : '') + netWeek.toFixed(2) + '亿</div></div>'
-    + '<div style="flex:1;text-align:center;"><div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px;">本月</div><div class="' + netMonthCls + '" style="font-size:18px;font-weight:700;">' + (netMonth > 0 ? '+' : '') + netMonth.toFixed(2) + '亿</div></div>'
+    + '<div style="flex:1;text-align:center;"><div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px;">今日</div><div class="' + netDayCls + '" style="font-size:18px;font-weight:700;">' + (netDay > 0 ? '+' : '') + toYi(netDay) + '亿</div></div>'
+    + '<div style="flex:1;text-align:center;"><div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px;">本周</div><div class="' + netWeekCls + '" style="font-size:18px;font-weight:700;">' + (netWeek > 0 ? '+' : '') + toYi(netWeek) + '亿</div></div>'
+    + '<div style="flex:1;text-align:center;"><div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px;">本月</div><div class="' + netMonthCls + '" style="font-size:18px;font-weight:700;">' + (netMonth > 0 ? '+' : '') + toYi(netMonth) + '亿</div></div>'
     + '</div>';
   // 20-day heatmap bars
   if (data.history && data.history.length) {
@@ -578,22 +579,22 @@ function showError(section) {
 // ===== REFRESH ALL =====
 async function refreshAll() {
   const results = await Promise.allSettled([
-    fetchJSON(apiURL('quotes')).then(d => { state.quotes = d; renderIndexCards(d); }).catch(() => showError('quotes')),
-    fetchJSON(apiURL('industries')).then(d => { state.industries = d; renderIndustries(d); }).catch(() => showError('industries')),
-    fetchJSON(apiURL('northbound')).then(d => { state.northbound = d; renderNorthbound(d); }).catch(() => showError('northbound')),
-    fetchJSON(apiURL('sentiment')).then(d => { state.sentiment = d; renderSentiment(d); }).catch(() => showError('sentiment')),
-    fetchJSON(apiURL('kline?period=weekly')).then(d => { state.kline = d; renderWatchlist(d); }).catch(() => showError('kline')),
+    fetchJSON(apiURL('quotes')).then(d => { state.quotes = d; renderIndexCards(d); hideLoading(); }).catch(() => showError('quotes')),
+    fetchJSON(apiURL('industries')).then(d => { state.industries = d; renderIndustries(d); hideLoading(); }).catch(() => showError('industries')),
+    fetchJSON(apiURL('northbound')).then(d => { state.northbound = d; renderNorthbound(d); hideLoading(); }).catch(() => showError('northbound')),
+    fetchJSON(apiURL('sentiment')).then(d => { state.sentiment = d; renderSentiment(d); hideLoading(); }).catch(() => showError('sentiment')),
+    fetchJSON(apiURL('kline?period=weekly')).then(d => { state.kline = d; renderWatchlist(d); hideLoading(); }).catch(() => showError('kline')),
   ]);
   // Hide loading screen (sections are visible by default)
-  const loading = document.getElementById('loadingScreen');
-  if (loading) loading.remove();
-}
-
-// Fallback: force hide loading screen after 8s even if some data fails
-setTimeout(function() {
   var ls = document.getElementById('loadingScreen');
   if (ls) ls.remove();
-}, 8000);
+}
+
+// Hide loading on any successful data fetch (don't wait for all)
+function hideLoading() {
+  var ls = document.getElementById('loadingScreen');
+  if (ls) ls.remove();
+}
 
 // ===== KLINE TAB SWITCHING =====
 document.addEventListener('click', e => {
