@@ -382,12 +382,44 @@ function renderIndexCards(data) {
   });
 }
 
+// ===== RENDER: INDUSTRIES =====
+function renderIndustries(data) {
+  var body = document.getElementById('industriesBody');
+  if (!data || !data.industries || !data.industries.length) {
+    body.innerHTML = '<div style="color:var(--text-secondary);text-align:center;padding:20px;">暂无数据</div>';
+    return;
+  }
+  var max = Math.max.apply(null, data.industries.map(function(i) { return Math.abs(i.weekChange); }));
+  if (max < 0.1) max = 0.1;
+  var html = '<div style="display:grid;grid-template-columns:2fr 1fr 1fr 2fr;font-size:11px;color:var(--text-secondary);padding:0 4px 8px 4px;border-bottom:1px solid rgba(255,255,255,0.06);"><span>板块名称</span><span style="text-align:right;">周涨幅</span><span style="text-align:right;">月涨幅</span><span></span></div>';
+  for (var i = 0; i < data.industries.length; i++) {
+    var ind = data.industries[i];
+    var barW = (Math.abs(ind.weekChange) / max * 100).toFixed(0);
+    var barColor = ind.weekChange >= 0 ? 'var(--green)' : 'var(--red)';
+    var rowStyle = i % 2 === 0 ? 'background:rgba(255,255,255,0.02);border-radius:4px;' : '';
+    html += '<div style="display:grid;grid-template-columns:2fr 1fr 1fr 2fr;align-items:center;padding:5px 4px;font-size:12px;' + rowStyle + '">'
+      + '<span>' + ind.name + '</span>'
+      + '<span style="text-align:right;color:' + (ind.weekChange >= 0 ? 'var(--green)' : 'var(--red)') + ';">' + (ind.weekChange > 0 ? '+' : '') + ind.weekChange.toFixed(2) + '%</span>'
+      + '<span style="text-align:right;color:' + (ind.monthChange >= 0 ? 'var(--green)' : 'var(--red)') + ';">' + (ind.monthChange > 0 ? '+' : '') + ind.monthChange.toFixed(2) + '%</span>'
+      + '<div style="height:6px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden;margin-left:8px;"><div style="height:100%;width:' + barW + '%;background:' + barColor + ';border-radius:3px;"></div></div>'
+      + '</div>';
+  }
+  body.innerHTML = html;
+}
+
 // ===== REFRESH ALL =====
 async function refreshAll() {
   try {
     const data = await fetchJSON(API_BASE + '/quotes');
     state.quotes = data;
     renderIndexCards(data);
+
+    // Industries
+    try {
+      const indData = await fetchJSON(API_BASE + '/industries');
+      state.industries = indData;
+      renderIndustries(indData);
+    } catch (e) { console.error('industries error:', e); }
 
     // Hide loading screen on first successful fetch
     const loading = document.getElementById('loadingScreen');
