@@ -407,6 +407,64 @@ function renderIndustries(data) {
   body.innerHTML = html;
 }
 
+// ===== RENDER: NORTHBOUND =====
+function renderNorthbound(data) {
+  var body = document.getElementById('northboundBody');
+  if (!data) {
+    body.innerHTML = '<div style="color:var(--text-secondary);text-align:center;padding:10px;">暂无数据</div>';
+    return;
+  }
+  var netDay = data.todayNet || 0;
+  var netWeek = data.weekNet || 0;
+  var netMonth = data.monthNet || 0;
+  var netDayCls = netDay >= 0 ? 'up' : 'down';
+  var netWeekCls = netWeek >= 0 ? 'up' : 'down';
+  var netMonthCls = netMonth >= 0 ? 'up' : 'down';
+  var html = '<div style="display:flex;gap:12px;margin-bottom:10px;">'
+    + '<div style="flex:1;text-align:center;"><div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px;">今日</div><div class="' + netDayCls + '" style="font-size:18px;font-weight:700;">' + (netDay > 0 ? '+' : '') + netDay.toFixed(2) + '亿</div></div>'
+    + '<div style="flex:1;text-align:center;"><div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px;">本周</div><div class="' + netWeekCls + '" style="font-size:18px;font-weight:700;">' + (netWeek > 0 ? '+' : '') + netWeek.toFixed(2) + '亿</div></div>'
+    + '<div style="flex:1;text-align:center;"><div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px;">本月</div><div class="' + netMonthCls + '" style="font-size:18px;font-weight:700;">' + (netMonth > 0 ? '+' : '') + netMonth.toFixed(2) + '亿</div></div>'
+    + '</div>';
+  // 20-day heatmap bars
+  if (data.history && data.history.length) {
+    var maxAbs = 0.1;
+    for (var i = 0; i < data.history.length; i++) {
+      var absVal = Math.abs(data.history[i].net);
+      if (absVal > maxAbs) maxAbs = absVal;
+    }
+    html += '<div style="display:flex;gap:3px;align-items:flex-end;height:32px;padding:0 2px;">';
+    for (var j = 0; j < data.history.length; j++) {
+      var net = data.history[j].net;
+      var barHeight = (Math.abs(net) / maxAbs * 28).toFixed(0);
+      if (Number(barHeight) < 2) barHeight = '2';
+      var barColor = net >= 0 ? 'var(--green)' : 'var(--red)';
+      var opacity = (Math.abs(net) / maxAbs * 0.5 + 0.3).toFixed(2);
+      html += '<div style="width:12px;height:' + barHeight + 'px;background:' + barColor + ';opacity:' + opacity + ';border-radius:2px 2px 0 0;flex-shrink:0;"></div>';
+    }
+    html += '</div>';
+  }
+  body.innerHTML = html;
+}
+
+// ===== RENDER: SENTIMENT =====
+function renderSentiment(data) {
+  var body = document.getElementById('sentimentBody');
+  if (!data) {
+    body.innerHTML = '<div style="color:var(--text-secondary);text-align:center;padding:10px;">暂无数据</div>';
+    return;
+  }
+  var zt = data.ztCount || 0;
+  var dt = data.dtCount || 0;
+  var vol = data.totalVolume || 0;
+  var other = Math.max(zt + dt > 0 ? 100 - zt - dt : 100, 0);
+  var html = '<div style="display:flex;align-items:center;gap:12px;">'
+    + '<div style="flex:1;text-align:center;"><div style="font-size:11px;color:var(--green);margin-bottom:4px;">涨停</div><div style="font-size:20px;font-weight:700;color:var(--green);">' + zt + '</div></div>'
+    + '<div style="flex:1;text-align:center;"><div style="font-size:11px;color:var(--red);margin-bottom:4px;">跌停</div><div style="font-size:20px;font-weight:700;color:var(--red);">' + dt + '</div></div>'
+    + '<div style="flex:1;text-align:center;"><div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px;">总量</div><div style="font-size:16px;font-weight:600;font-variant-numeric:tabular-nums;">' + Number(vol).toLocaleString('zh-CN') + '</div></div>'
+    + '</div>';
+  body.innerHTML = html;
+}
+
 // ===== REFRESH ALL =====
 async function refreshAll() {
   try {
@@ -420,6 +478,20 @@ async function refreshAll() {
       state.industries = indData;
       renderIndustries(indData);
     } catch (e) { console.error('industries error:', e); }
+
+    // Northbound
+    try {
+      const nbData = await fetchJSON(API_BASE + '/northbound');
+      state.northbound = nbData;
+      renderNorthbound(nbData);
+    } catch (e) { console.error('northbound error:', e); }
+
+    // Sentiment
+    try {
+      const sentData = await fetchJSON(API_BASE + '/sentiment');
+      state.sentiment = sentData;
+      renderSentiment(sentData);
+    } catch (e) { console.error('sentiment error:', e); }
 
     // Hide loading screen on first successful fetch
     const loading = document.getElementById('loadingScreen');
