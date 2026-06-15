@@ -100,8 +100,8 @@ async function generateNorthbound() {
 async function generateSentiment() {
   try {
     const [ztPool, dtPool] = await Promise.all([
-      sdk.ztpool.getPool({ type: 'zt' }),
-      sdk.ztpool.getPool({ type: 'dt' })
+      sdk.getZTPool('zt'),
+      sdk.getZTPool('dt')
     ]);
     return {
       ztCount: (ztPool || []).length,
