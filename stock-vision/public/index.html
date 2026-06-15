@@ -132,6 +132,94 @@
   }
   .up { color: var(--green); }
   .down { color: var(--red); }
+
+  /* ===== MIDDLE GRID ===== */
+  .middle-grid {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .right-col {
+    display: grid;
+    grid-template-rows: 1fr 1fr;
+    gap: 12px;
+  }
+
+  /* ===== CARD ===== */
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    transition: transform 0.2s, box-shadow 0.2s;
+    overflow: hidden;
+  }
+  .card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(92,107,192,0.1);
+  }
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .card-header h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+  .card-body {
+    padding: 14px 16px;
+  }
+
+  /* ===== TAB GROUP ===== */
+  .tab-group {
+    display: flex;
+    gap: 2px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 6px;
+    padding: 2px;
+  }
+  .tab {
+    padding: 4px 12px;
+    font-size: 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: background 0.15s, color 0.15s;
+    border: none;
+    background: transparent;
+    font-family: inherit;
+  }
+  .tab:hover {
+    color: var(--text-primary);
+    background: rgba(255,255,255,0.06);
+  }
+  .tab.active {
+    background: rgba(92,107,192,0.25);
+    color: var(--purple-light);
+  }
+
+  /* ===== LOADING SKELETON ===== */
+  .loading-skeleton {
+    background: rgba(255,255,255,0.03);
+    border-radius: 4px;
+    animation: skeleton-pulse 1.5s ease-in-out infinite;
+  }
+  @keyframes skeleton-pulse {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.1; }
+  }
+
+  /* ===== WATCHLIST SECTION ===== */
+  .watchlist-section {
+    margin-bottom: 20px;
+  }
+  .watchlist-section .card-body {
+    padding: 0;
+  }
 </style>
 </head>
 <body>
@@ -181,6 +269,57 @@
       <div class="index-price" id="price-000688">--</div>
       <div class="index-change" id="change-000688">--</div>
       <canvas class="index-chart" id="chart-000688"></canvas>
+    </div>
+  </div>
+
+  <!-- MIDDLE GRID -->
+  <div class="middle-grid" id="middleGrid" style="display:none;">
+    <!-- Industries -->
+    <div class="card" id="industriesCard">
+      <div class="card-header">
+        <h3>🏭 板块涨幅榜</h3>
+        <span style="font-size:12px;color:var(--text-secondary);">周涨跌幅</span>
+      </div>
+      <div class="card-body" id="industriesBody">
+        <div class="loading-skeleton" style="height:200px;"></div>
+      </div>
+    </div>
+
+    <!-- Right column -->
+    <div class="right-col">
+      <!-- Northbound -->
+      <div class="card" id="northboundCard">
+        <div class="card-header">
+          <h3>🌐 北向资金</h3>
+        </div>
+        <div class="card-body" id="northboundBody">
+          <div class="loading-skeleton" style="height:80px;"></div>
+        </div>
+      </div>
+      <!-- Sentiment -->
+      <div class="card" id="sentimentCard">
+        <div class="card-header">
+          <h3>📈 市场情绪</h3>
+        </div>
+        <div class="card-body" id="sentimentBody">
+          <div class="loading-skeleton" style="height:80px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WATCHLIST SECTION -->
+  <div class="watchlist-section" id="watchlistSection" style="display:none;">
+    <div class="card">
+      <div class="card-header">
+        <h3>📋 自选股</h3>
+        <div class="tab-group">
+          <button class="tab active" data-period="weekly">周K</button>
+          <button class="tab" data-period="daily">日K</button>
+          <button class="tab" data-period="monthly">月K</button>
+        </div>
+      </div>
+      <div class="card-body" id="watchlistBody"></div>
     </div>
   </div>
 </div>
